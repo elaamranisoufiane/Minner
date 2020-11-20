@@ -4,7 +4,6 @@ for a in 1 2 3 4 5 6
 do
 
 gcloud compute instances create gcelab$a --machine-type n1-standard-2 --zone us-central1-c --image-family=ubuntu-2004-lts --image-project=ubuntu-os-cloud 
-sleep  10
 done
 for a in 1 2 3 4 5 6
 do
