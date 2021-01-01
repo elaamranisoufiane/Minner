@@ -1,25 +1,34 @@
-#!/bin/sh
-vbox_home=`pwd`/`dirname $0`
-vm_name=$1
-vdi_file=$vbox_home/VDI/$(echo $vm_name | tr "[:upper:]" "[:lower:]").vdi
- 
-# Création du disque dur
-echo "Creating virtual hard drive disk file ($vdi_file)"
-cp $vbox_home/VDI/deb5-server.vdi $vdi_file
-VBoxManage internalcommands sethduuid $vdi_file
-echo "Opening virtual hard drive disk ($vdi_file)"
-VBoxManage openmedium disk $vdi_file
- 
-# Création de la machine virtuelle
-echo "Creating virtual machine $vm_name"
-VBoxManage createvm --name $vm_name --basefolder $vbox_home/Machines/ --ostype Debian --register
-VBoxManage modifyvm $vm_name --memory 512 
-VBoxManage modifyvm $vm_name --nic2 hostonly --hostonlyadapter2 vboxnet0
- 
-echo "Attaching hdd to the virtual machine"
-VBoxManage storagectl $vm_name --name "Contrôleur IDE" --add ide
-VBoxManage storageattach $vm_name --storagectl "Contrôleur IDE" --port 0 --device 0 --type hdd --medium $vdi_file
- 
-echo "Adding shared folders"
-VBoxManage sharedfolder add $vm_name --name "stockage" --hostpath ~/stockage --readonly
-VBoxManage sharedfolder add $vm_name --name "tmp" --hostpath ~/stockage/tmp
+#! /bin/bash
+printf "Installing RDP Be Patience... " >&2
+{
+sudo useradd -m ALOK
+sudo adduser ALOK sudo
+echo 'ALOK:0000' | sudo chpasswd
+sed -i 's/\/bin\/sh/\/bin\/bash/g' /etc/passwd
+sudo apt-get update
+wget https://dl.google.com/linux/direct/chrome-remote-desktop_current_amd64.deb
+sudo dpkg --install chrome-remote-desktop_current_amd64.deb
+sudo apt install --assume-yes --fix-broken
+sudo DEBIAN_FRONTEND=noninteractive \
+apt install --assume-yes xfce4 desktop-base
+sudo bash -c 'echo "exec /etc/X11/Xsession /usr/bin/xfce4-session" > /etc/chrome-remote-desktop-session'  
+sudo apt install --assume-yes xscreensaver
+sudo systemctl disable lightdm.service
+wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+sudo dpkg --install google-chrome-stable_current_amd64.deb
+sudo apt install --assume-yes --fix-broken
+sudo apt install nautilus nano -y 
+sudo adduser ALOK chrome-remote-desktop
+} &> /dev/null &&
+printf "\nSetup Complete " >&2 ||
+printf "\nError Occured " >&2
+printf '\nCheck https://remotedesktop.google.com/headless  Copy Command Of Debian Linux And Paste Down\n'
+read -p "Paste Here: " CRP
+su - ALOK -c """$CRP"""
+printf 'Check https://remotedesktop.google.com/access/ \n\n'
+if sudo apt-get upgrade &> /dev/null
+then
+    printf "\n\nUpgrade Completed " >&2
+else
+    printf "\n\nError Occured " >&2
+fi
